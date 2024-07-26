@@ -33,11 +33,15 @@ const Calendar = () => {
   return (
     <View style={styles.container}>
       {/* Left Arrow */}
-      {startDate > minimumDate && (
-        <TouchableOpacity style={styles.leftArrow} onPress={handlePrevWeek}>
-          <Text style={styles.arrowText}>&lt;</Text>
-        </TouchableOpacity>
-      )}
+      <TouchableOpacity
+        style={styles.leftArrow}
+        onPress={handlePrevWeek}
+        disabled={startDate <= minimumDate}
+      >
+        <Text style={[styles.arrowText, startDate <= minimumDate && styles.disabledArrow]}>
+          &lt;
+        </Text>
+      </TouchableOpacity>
 
       {/* Right Arrow */}
       <TouchableOpacity style={styles.rightArrow} onPress={handleNextWeek}>
@@ -87,13 +91,16 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
   },
+  disabledArrow: {
+    color: 'gray'
+  },
   weekContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'flex-start',
   },
   dayContainer: {
-    width: 80, // Fixed width for each day to avoid overlap
+    width: 80,
     alignItems: 'center',
     marginHorizontal: 10,
   },
@@ -103,11 +110,11 @@ const styles = StyleSheet.create({
   },
   dayNameText: {
     fontSize: 16,
-    fontWeight: 'bold',
+    color: '#555',
   },
   dayDateText: {
     fontSize: 14,
-    color: '#666',
+    fontWeight: 'bold',
   }
 });
 
