@@ -1,12 +1,49 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
-import { format, addDays } from 'date-fns';
+import { format, addDays, parseISO } from 'date-fns';
+import axios from 'axios';
 import { fr } from 'date-fns/locale';
 
 
 const Calendar = () => {
+  const [schedules, setSchedules] = useState({});
   const [startDate, setStartDate] = useState(new Date());
   const minimumDate = new Date();
+
+  useEffect(() => {
+    const requestBody = {
+      start_date: format(startDate, 'yyyy-MM-dd'),
+      end_date: format(addDays(startDate, 6), 'yyyy-MM-dd')
+    };
+
+    const headers = {
+      'apikey': 'IK-HJQT0XWDYA2I2B000NVD', 
+      'Content-Type': 'application/json'
+    };
+
+    // Fetch slots
+    axios.post('https://ikalas.com/api/v1/ik-slots', requestBody, { headers })
+      .then(response => {
+        // Process the response data to group by date
+        const groupedSchedules = response.data.result.reduce((acc, schedule) => {
+          const startDate = format(parseISO(schedule.start), 'yyyy-MM-dd');
+          const startTime = format(parseISO(schedule.start), 'HH:mm');
+          const endTime = format(parseISO(schedule.end), 'HH:mm');
+
+          if (!acc[startDate]) {
+            acc[startDate] = [];
+          }
+          acc[startDate].push(`${startTime} - ${endTime}`);
+
+          return acc;
+        }, {});
+
+        setSchedules(groupedSchedules);
+      })
+      .catch(error => {
+        console.error('Error fetching slots:', error);
+      });
+  }, [startDate]);
 
   // Handle previous and next week navigation
   const handlePrevWeek = () => {
@@ -60,6 +97,18 @@ const Calendar = () => {
                 {format(date, 'dd MMM', { locale: fr }).replace(/\.$/, '')}
               </Text>
             </View>
+              {schedules[format(date, 'yyyy-MM-dd')] ? (
+                schedules[format(date, 'yyyy-MM-dd')].map((time, index) => (
+                  <TouchableOpacity 
+                    key={index} 
+                    style={styles.scheduleContainer}
+                    activeOpacity={0.6}
+                  >
+                    <Text style={styles.scheduleText}>{time}</Text>
+                  </TouchableOpacity>
+                ))
+                ) : (<Text></Text>)
+              }
           </View>
         ))}
       </ScrollView>
@@ -115,6 +164,18 @@ const styles = StyleSheet.create({
   dayDateText: {
     fontSize: 14,
     fontWeight: 'bold',
+  },
+  scheduleContainer: {
+    marginVertical: 2,
+    padding: 5,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 5,
+    width: '100%',
+    alignItems: 'center',
+  },
+  scheduleText: {
+    fontSize: 14,
   }
 });
 
